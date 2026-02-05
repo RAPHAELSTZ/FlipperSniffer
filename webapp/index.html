@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlipperSniffer - Gamified WarDriving Analytics</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+
+    <!-- ═══════════════ UPLOAD SCREEN ═══════════════ -->
+    <div id="upload-screen" class="screen active">
+        <div class="upload-container">
+            <div class="logo-section">
+                <h1 class="glitch" data-text="FLIPPER SNIFFER">FLIPPER SNIFFER</h1>
+                <p class="subtitle">Gamified WarDriving Analytics</p>
+                <div class="scanline"></div>
+            </div>
+
+            <div id="drop-zone" class="drop-zone">
+                <div class="drop-zone-inner">
+                    <div class="upload-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <p class="drop-text">DROP YOUR SESSION FILE HERE</p>
+                    <p class="drop-subtext">or click to browse</p>
+                    <p class="drop-format">.json exported from FlipperSniffer</p>
+                    <input type="file" id="file-input" accept=".json" hidden>
+                </div>
+            </div>
+
+            <div id="file-info" class="file-info hidden">
+                <span class="file-name"></span>
+                <span class="file-check">&#10003;</span>
+            </div>
+
+            <button id="analyze-btn" class="btn-primary hidden" disabled>
+                ANALYZE MY WALK <span class="btn-arrow">&rarr;</span>
+            </button>
+
+            <div class="demo-section">
+                <button id="demo-btn" class="btn-secondary">
+                    LOAD DEMO SESSION
+                </button>
+                <p class="demo-hint">No Flipper? Try with sample data</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ DASHBOARD SCREEN ═══════════════ -->
+    <div id="dashboard-screen" class="screen">
+
+        <!-- HEADER BAR -->
+        <header class="dash-header">
+            <div class="header-left">
+                <h1 class="header-logo">FLIPPER<span class="accent">SNIFFER</span></h1>
+            </div>
+            <div class="header-center">
+                <div class="header-stat">
+                    <span class="header-label">Session</span>
+                    <span id="header-session-id" class="header-value">#------</span>
+                </div>
+                <div class="header-stat">
+                    <span class="header-label">Distance</span>
+                    <span id="header-distance" class="header-value">--</span>
+                </div>
+                <div class="header-stat">
+                    <span class="header-label">Duration</span>
+                    <span id="header-duration" class="header-value">--</span>
+                </div>
+                <div class="header-stat">
+                    <span class="header-label">Devices</span>
+                    <span id="header-total" class="header-value">--</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="new-session-btn" class="btn-small">NEW SESSION</button>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main class="dash-main">
+
+            <!-- LEFT: MAP -->
+            <section class="map-section">
+                <div class="section-header">
+                    <h2>SCAN MAP</h2>
+                    <div class="map-controls">
+                        <button class="map-toggle active" data-layer="path">Path</button>
+                        <button class="map-toggle active" data-layer="bluetooth">BT</button>
+                        <button class="map-toggle active" data-layer="wifi">WiFi</button>
+                        <button class="map-toggle" data-layer="heatmap">Heat</button>
+                    </div>
+                </div>
+                <div id="map" class="map-container"></div>
+            </section>
+
+            <!-- RIGHT: METRICS -->
+            <section class="metrics-section">
+
+                <!-- Economy Score -->
+                <div class="metric-card economy-card">
+                    <div class="metric-icon">&#128176;</div>
+                    <div class="metric-content">
+                        <h3>Neighbourhood Economy</h3>
+                        <div class="metric-score">
+                            <span id="economy-score" class="big-number">--</span>
+                            <span class="score-max">/100</span>
+                        </div>
+                        <p id="economy-label" class="metric-label">Analyzing...</p>
+                    </div>
+                </div>
+
+                <!-- Estimated Income -->
+                <div class="metric-card income-card">
+                    <div class="metric-icon">&#128181;</div>
+                    <div class="metric-content">
+                        <h3>Est. Avg Income</h3>
+                        <div class="metric-score">
+                            <span id="income-value" class="big-number">--</span>
+                            <span class="score-unit">&euro;/year</span>
+                        </div>
+                        <p class="metric-sublabel">Based on device values &amp; density</p>
+                    </div>
+                </div>
+
+                <!-- Danger Score -->
+                <div class="metric-card danger-card">
+                    <div class="metric-icon">&#9888;&#65039;</div>
+                    <div class="metric-content">
+                        <h3>Security Risk</h3>
+                        <div class="metric-score">
+                            <span id="danger-score" class="big-number">--</span>
+                            <span class="score-max">/10</span>
+                        </div>
+                        <div id="danger-bar" class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <p id="danger-label" class="metric-label">Analyzing...</p>
+                    </div>
+                </div>
+
+                <!-- Tech Tribes -->
+                <div class="metric-card tribes-card">
+                    <div class="card-header">
+                        <div class="metric-icon">&#128241;</div>
+                        <h3>Tech Tribes</h3>
+                    </div>
+                    <div id="tribes-container" class="tribes-list">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Device Breakdown -->
+                <div class="metric-card breakdown-card">
+                    <div class="card-header">
+                        <div class="metric-icon">&#128225;</div>
+                        <h3>Device Breakdown</h3>
+                    </div>
+                    <div class="breakdown-grid">
+                        <div class="breakdown-item">
+                            <span class="breakdown-value" id="bt-count">--</span>
+                            <span class="breakdown-label">Bluetooth</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-value" id="wifi-count">--</span>
+                            <span class="breakdown-label">WiFi</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-value" id="nfc-count">--</span>
+                            <span class="breakdown-label">NFC</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-value" id="total-count">--</span>
+                            <span class="breakdown-label">Total</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- CHARTS ROW -->
+        <section class="charts-section">
+            <div class="chart-card">
+                <h3>Discovery Timeline</h3>
+                <canvas id="timeline-chart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Brand Distribution</h3>
+                <canvas id="brand-chart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>WiFi Security</h3>
+                <canvas id="security-chart"></canvas>
+            </div>
+        </section>
+
+        <!-- ACHIEVEMENTS -->
+        <section class="achievements-section">
+            <h2 class="section-title">ACHIEVEMENTS UNLOCKED</h2>
+            <div id="achievements-container" class="achievements-grid">
+                <!-- Filled by JS -->
+            </div>
+        </section>
+
+        <!-- SHARE SECTION -->
+        <section class="share-section">
+            <h2 class="section-title">SHARE YOUR WALK</h2>
+            <div id="share-card" class="share-card-preview">
+                <!-- Generated share card -->
+            </div>
+            <div class="share-buttons">
+                <button id="share-twitter" class="btn-share btn-twitter">Tweet My Walk</button>
+                <button id="share-mastodon" class="btn-share btn-mastodon">Toot This!</button>
+                <button id="share-download" class="btn-share btn-download">Save as Image</button>
+                <button id="share-copy" class="btn-share btn-copy">Copy Stats</button>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="dash-footer">
+            <p>FlipperSniffer &mdash; Gamified WarDriving Analytics</p>
+            <p class="footer-disclaimer">All data stays local. No personal data is collected or transmitted.</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/demo-data.js"></script>
+    <script src="js/upload.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/share.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
