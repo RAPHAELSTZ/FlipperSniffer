@@ -24,14 +24,13 @@ FlipperSniffer/
 ├── flipper/                     # Flipper Zero JavaScript app
 │   ├── flipper_sniffer.js       # Main app entry point
 │   ├── settings.js              # Settings management + SD card persistence
-│   ├── gps.js                   # GPS: hardware module OR smartphone BLE
+│   ├── gps.js                   # GPS via hardware UART module
 │   ├── scanner.js               # BLE + WiFi scanning, manufacturer ID
 │   ├── database.js              # In-memory DB, deduplication, JSON export
 │   └── ui.js                    # Flipper display rendering (6 screens)
 │
 └── webapp/                      # Web analytics dashboard
     ├── index.html               # Main page (upload + dashboard)
-    ├── companion.html           # Phone GPS companion (open on your phone)
     ├── css/
     │   └── style.css            # Cyberpunk dark theme
     └── js/
@@ -52,9 +51,7 @@ FlipperSniffer/
 ### Requirements
 
 - Flipper Zero with firmware supporting JavaScript apps (Momentum, Unleashed, or official with JS support)
-- **For GPS** (optional, pick one):
-  - A smartphone with a BLE GPS relay app (recommended, no extra hardware)
-  - A hardware GPS module connected via UART (BN-220, NEO-6M, NEO-8M...)
+- **For GPS** (optional): a hardware GPS module connected via UART (BN-220, NEO-6M, NEO-8M...). Costs ~10-15 EUR. Without it, scanning still works but without location/map data.
 - Optional: WiFi dev board (ESP32-based) for WiFi scanning
 
 ### Installation
@@ -82,43 +79,16 @@ When you launch the app, you land on a **Start Screen** that shows a summary of 
 
 Settings are **saved to the SD card** and persist between sessions.
 
-#### GPS Source
+#### GPS
 
 | Option | Description |
 |--------|-------------|
-| **Phone BT** (default) | Receives GPS from your smartphone via Bluetooth. No extra hardware needed. Pair your phone with the Flipper, then start a GPS relay app on your phone (see below). |
-| **Module** | Uses a hardware GPS module connected to the Flipper's GPIO via UART (9600 baud). For users who have a BN-220, NEO-6M, or similar module. |
-| **Off** | No GPS. Devices are still scanned and counted, but without location data. The map in the web dashboard will be empty. |
+| **Module** (default) | Uses a hardware GPS module connected to the Flipper's GPIO via UART (9600 baud). BN-220, NEO-6M, NEO-8M, etc. |
+| **Off** | No GPS. Devices are still scanned and counted, but without location data. The map will be empty in the web dashboard, but all other metrics still work. |
 
-#### Phone BT GPS Setup
+#### GPS Module Setup
 
-No extra hardware, no app to install. A companion web page is included in the project - just open it on your phone's browser.
-
-1. Set GPS Source to **Phone BT** in settings on the Flipper
-2. On your phone, open **`companion.html`** in Chrome (or your hosted URL)
-3. Tap **"Connect to Flipper"** - select your Flipper from the Bluetooth list
-4. Tap **"Start GPS"** - allow location access when prompted
-5. Start your FlipperSniffer session - the GPS indicator should show `GPS:OK`
-
-That's it. The web page reads your phone's GPS and sends coordinates to the Flipper every 3 seconds via Bluetooth. Your phone screen stays on automatically during the walk.
-
-**Browser compatibility:**
-
-| Browser | Support |
-|---------|---------|
-| **Chrome Android** | Full support (recommended) |
-| **Edge Android** | Full support |
-| **Samsung Internet** | Full support |
-| **Safari iOS** | Not supported (no Web Bluetooth) |
-| **Firefox** | Not supported |
-
-> **iPhone users**: Web Bluetooth is not available on Safari. You can use the **Bluefy** browser (App Store), or use the hardware GPS module option, or set GPS to Off.
-
-The companion page can be opened locally from the SD card, or hosted alongside the main dashboard. It sends JSON lines over BLE serial: `{"lat":48.85,"lon":2.35,"speed":1.2}`
-
-#### Hardware GPS Module Setup
-
-If you prefer a dedicated GPS module:
+Connect a GPS module to the Flipper's GPIO:
 
 | GPS Module | Flipper GPIO |
 |-----------|-------------|
@@ -156,7 +126,7 @@ If you prefer a dedicated GPS module:
 │ FLIPPER SNIFFER              │
 │ v1.1 - WarDriving            │
 │                              │
-│ GPS: Phone BT  Batt: Normal  │
+│ GPS: Module    Batt: Normal  │
 │ Scan: BT+WiFi               │
 │                              │
 │ [Settings]        [> START]  │
@@ -171,7 +141,7 @@ If you prefer a dedicated GPS module:
 ┌──────────────────────────────┐
 │ SETTINGS                     │
 │                              │
-│ > GPS Source       [Phone BT]│
+│ > GPS              [Module]  │
 │   Battery          [Normal]  │
 │   Scan BT          [ON]     │
 │   Scan WiFi        [ON]     │
@@ -346,7 +316,7 @@ Shows the brand distribution of Bluetooth devices as percentage bars. The manufa
 | Component | Technology |
 |-----------|-----------|
 | Flipper App | JavaScript (Flipper JS runtime) |
-| GPS | UART module OR smartphone BLE relay |
+| GPS | Hardware UART module (NMEA, 9600 baud) |
 | Settings | JSON persistence on SD card |
 | Map | Leaflet.js + CartoDB dark tiles |
 | Heatmap | leaflet.heat |

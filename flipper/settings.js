@@ -11,8 +11,8 @@ let SETTINGS_FILE = "/ext/apps_data/flipper_sniffer/settings.json";
 // ──────────────────────────────────────
 
 let defaults = {
-    // GPS Source: "off", "module", "phone"
-    gps_source: "phone",
+    // GPS Source: "off" or "module"
+    gps_source: "module",
 
     // Scan toggles
     scan_bt: true,
@@ -46,7 +46,7 @@ let current = {};
 // ──────────────────────────────────────
 
 let menu = [
-    { key: "gps_source",     label: "GPS Source",     type: "choice", options: ["off", "module", "phone"],     display: ["Off", "Module", "Phone BT"] },
+    { key: "gps_source",     label: "GPS",            type: "choice", options: ["off", "module"],               display: ["Off", "Module"] },
     { key: "battery_mode",   label: "Battery",        type: "choice", options: ["full", "normal", "saving"],   display: ["Full", "Normal", "Saving"] },
     { key: "scan_bt",        label: "Scan BT",        type: "bool" },
     { key: "scan_wifi",      label: "Scan WiFi",      type: "bool" },
@@ -189,10 +189,6 @@ function is_gps_enabled() {
     return current.gps_source !== "off";
 }
 
-function is_gps_phone() {
-    return current.gps_source === "phone";
-}
-
 function is_gps_module() {
     return current.gps_source === "module";
 }
@@ -218,7 +214,6 @@ module.exports = {
     cycle: cycle,
     get_intervals: get_intervals,
     is_gps_enabled: is_gps_enabled,
-    is_gps_phone: is_gps_phone,
     is_gps_module: is_gps_module,
     reset: reset,
 };

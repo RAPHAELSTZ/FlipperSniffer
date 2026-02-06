@@ -59,7 +59,7 @@ function draw_start(canvas, data) {
 
     // GPS status preview
     let gps_src = data.gps_source || "off";
-    let gps_label = gps_src === "phone" ? "Phone BT" : gps_src === "module" ? "HW Module" : "Off";
+    let gps_label = gps_src === "module" ? "Module" : "Off";
     canvas.drawStr(2, 36, "GPS: " + gps_label);
 
     // Battery mode
@@ -158,7 +158,7 @@ function draw_main(canvas, data) {
     } else if (gps_fix) {
         gps_str = "GPS:OK";
     } else {
-        gps_str = gps_mode === "phone" ? "BT:..." : "GPS:...";
+        gps_str = "GPS:...";
     }
     canvas.drawStr(50, 20, timer_str + "|" + gps_str);
 
