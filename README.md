@@ -31,6 +31,7 @@ FlipperSniffer/
 │
 └── webapp/                      # Web analytics dashboard
     ├── index.html               # Main page (upload + dashboard)
+    ├── companion.html           # Phone GPS companion (open on your phone)
     ├── css/
     │   └── style.css            # Cyberpunk dark theme
     └── js/
@@ -91,15 +92,29 @@ Settings are **saved to the SD card** and persist between sessions.
 
 #### Phone BT GPS Setup
 
-1. Set GPS Source to **Phone BT** in settings
-2. On your smartphone, install a BLE GPS relay app:
-   - **Android**: "Bluetooth GPS Output", "GPS2BLE", or "Share GPS"
-   - **iOS**: "GPS2BLE", "BLE GPS", or similar
-3. Pair your phone with the Flipper Zero via Bluetooth
-4. Start the GPS relay app on your phone
+No extra hardware, no app to install. A companion web page is included in the project - just open it on your phone's browser.
+
+1. Set GPS Source to **Phone BT** in settings on the Flipper
+2. On your phone, open **`companion.html`** in Chrome (or your hosted URL)
+3. Tap **"Connect to Flipper"** - select your Flipper from the Bluetooth list
+4. Tap **"Start GPS"** - allow location access when prompted
 5. Start your FlipperSniffer session - the GPS indicator should show `GPS:OK`
 
-The app accepts both **NMEA sentences** ($GPGGA, $GPRMC) and **simple JSON** (`{"lat":48.85,"lon":2.35,"speed":1.2}`) over BLE serial.
+That's it. The web page reads your phone's GPS and sends coordinates to the Flipper every 3 seconds via Bluetooth. Your phone screen stays on automatically during the walk.
+
+**Browser compatibility:**
+
+| Browser | Support |
+|---------|---------|
+| **Chrome Android** | Full support (recommended) |
+| **Edge Android** | Full support |
+| **Samsung Internet** | Full support |
+| **Safari iOS** | Not supported (no Web Bluetooth) |
+| **Firefox** | Not supported |
+
+> **iPhone users**: Web Bluetooth is not available on Safari. You can use the **Bluefy** browser (App Store), or use the hardware GPS module option, or set GPS to Off.
+
+The companion page can be opened locally from the SD card, or hosted alongside the main dashboard. It sends JSON lines over BLE serial: `{"lat":48.85,"lon":2.35,"speed":1.2}`
 
 #### Hardware GPS Module Setup
 
