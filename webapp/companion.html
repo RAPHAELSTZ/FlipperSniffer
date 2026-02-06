@@ -298,6 +298,61 @@
 
         .error-msg.visible { display: block; }
 
+        /* Session ID input */
+        .session-id-section {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .session-id-section label {
+            font-family: var(--font-display);
+            font-size: 0.7rem;
+            color: var(--neon-cyan);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .session-id-input {
+            flex: 1;
+            background: rgba(0, 245, 255, 0.05);
+            border: 1px solid rgba(0, 245, 255, 0.2);
+            border-radius: 6px;
+            padding: 0.5rem 0.7rem;
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            color: var(--neon-cyan);
+            letter-spacing: 3px;
+            text-transform: lowercase;
+            text-align: center;
+            max-width: 140px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .session-id-input::placeholder {
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            font-size: 0.75rem;
+        }
+
+        .session-id-input:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 245, 255, 0.15);
+        }
+
+        .session-id-hint {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
         /* Responsive */
         @media (max-width: 400px) {
             .stats-grid { grid-template-columns: 1fr 1fr; }
@@ -318,6 +373,12 @@
                 <span id="status-text">Ready</span>
             </div>
             <span id="gps-accuracy" class="gps-accuracy"></span>
+        </div>
+
+        <div class="session-id-section">
+            <label for="session-id">Session #</label>
+            <input type="text" id="session-id" class="session-id-input" maxlength="8" placeholder="a3f9b2" autocomplete="off" spellcheck="false">
+            <span class="session-id-hint">From Flipper screen</span>
         </div>
 
         <div id="error-msg" class="error-msg"></div>
@@ -357,11 +418,12 @@
         <div class="info-section">
             <h3>How to use</h3>
             <div class="step"><span>1.</span> Open this page on your phone</div>
-            <div class="step"><span>2.</span> Tap START, allow GPS access</div>
-            <div class="step"><span>3.</span> Start scanning on your Flipper Zero (GPS: Off or Companion)</div>
-            <div class="step"><span>4.</span> Walk! Both devices record independently</div>
-            <div class="step"><span>5.</span> When done, tap STOP and download the GPS track</div>
-            <div class="step"><span>6.</span> On the dashboard, upload both files to merge</div>
+            <div class="step"><span>2.</span> Start scanning on your Flipper (GPS: Phone)</div>
+            <div class="step"><span>3.</span> Type the session # shown on Flipper (e.g. a3f9b2)</div>
+            <div class="step"><span>4.</span> Tap START, allow GPS access</div>
+            <div class="step"><span>5.</span> Walk! Both devices record independently</div>
+            <div class="step"><span>6.</span> When done, tap STOP and download the GPS track</div>
+            <div class="step"><span>7.</span> On the dashboard, upload both files to merge</div>
         </div>
 
         <div class="footer">
@@ -613,9 +675,14 @@
             var durationSec = Math.floor((endTime - startTime) / 1000);
             var avgSpeed = durationSec > 0 ? (totalDistance / (durationSec / 3600)) : 0;
 
+            // Get session ID from input (optional)
+            var sessionIdInput = document.getElementById("session-id");
+            var sessionId = sessionIdInput.value.trim().toLowerCase();
+
             var trackData = {
                 type: "flipper_sniffer_gps_track",
                 version: "1.0",
+                session_id: sessionId || null,
                 start_time: startTime,
                 end_time: endTime,
                 points: points,

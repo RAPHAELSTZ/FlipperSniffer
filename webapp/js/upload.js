@@ -94,6 +94,14 @@ var Upload = (function () {
 
             // If we have a GPS track, merge first
             if (gpsTrackData) {
+                // Warn on session ID mismatch
+                var idCheck = Merge.checkSessionIdMatch(sessionData, gpsTrackData);
+                if (idCheck === "mismatch") {
+                    if (!confirm("The session IDs don't match. The GPS track may be from a different session. Merge anyway?")) {
+                        return;
+                    }
+                }
+
                 var result = Merge.mergeSessionWithTrack(sessionData, gpsTrackData);
                 if (result.success) {
                     showMergeStats(result.stats);
@@ -234,7 +242,17 @@ var Upload = (function () {
         gpsFileInfo.querySelector(".file-name").textContent = filename;
         var detailEl = gpsFileInfo.querySelector(".gps-detail");
         if (detailEl) {
-            detailEl.textContent = pts + " GPS points, " + dist + " km";
+            var detail = pts + " GPS points, " + dist + " km";
+            // Show session ID match status if both files loaded
+            if (sessionData && trackData.session_id) {
+                var idCheck = Merge.checkSessionIdMatch(sessionData, trackData);
+                if (idCheck === "match") {
+                    detail += " | Session ID: match";
+                } else if (idCheck === "mismatch") {
+                    detail += " | Session ID: MISMATCH";
+                }
+            }
+            detailEl.textContent = detail;
         }
     }
 
@@ -243,7 +261,8 @@ var Upload = (function () {
         var pct = total > 0 ? Math.round((stats.matched / total) * 100) : 0;
         console.log(
             "[Merge] " + stats.matched + "/" + total + " devices matched (" + pct + "%), " +
-            stats.gps_points + " GPS points, " + stats.track_distance_km + " km track"
+            stats.gps_points + " GPS points, " + stats.track_distance_km + " km track" +
+            " | Session ID: " + stats.session_id_match
         );
     }
 

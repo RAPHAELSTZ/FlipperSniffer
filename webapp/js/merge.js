@@ -40,12 +40,28 @@ var Merge = (function () {
         return diffLo <= diffHi ? points[lo] : points[hi];
     }
 
+    // Check if session ID from companion matches the Flipper session
+    function checkSessionIdMatch(sessionData, trackData) {
+        var trackId = trackData.session_id;
+        var sessionId = sessionData.session && sessionData.session.id;
+
+        if (!trackId || !sessionId) return "none"; // No ID to compare
+        // Compare first N chars (companion input may be partial)
+        var len = Math.min(trackId.length, sessionId.length);
+        if (len === 0) return "none";
+        if (sessionId.substring(0, len) === trackId.substring(0, len)) return "match";
+        return "mismatch";
+    }
+
     // Merge session data with GPS track
     // Returns a new session object with GPS coordinates injected
     function mergeSessionWithTrack(sessionData, trackData) {
         if (!validateTrack(trackData)) {
             return { success: false, error: "Invalid GPS track file" };
         }
+
+        // Check session ID
+        var idMatch = checkSessionIdMatch(sessionData, trackData);
 
         // Sort GPS points by timestamp (should already be, but ensure)
         var sortedPoints = trackData.points.slice().sort(function (a, b) {
@@ -135,13 +151,15 @@ var Merge = (function () {
                 unmatched: unmatchedDevices,
                 gps_points: sortedPoints.length,
                 track_duration: Math.round((trackEnd - trackStart) / 1000),
-                track_distance_km: trackData.stats ? trackData.stats.distance_km : 0
+                track_distance_km: trackData.stats ? trackData.stats.distance_km : 0,
+                session_id_match: idMatch
             }
         };
     }
 
     return {
         validateTrack: validateTrack,
+        checkSessionIdMatch: checkSessionIdMatch,
         mergeSessionWithTrack: mergeSessionWithTrack
     };
 
