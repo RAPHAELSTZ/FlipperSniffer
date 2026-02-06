@@ -8,11 +8,12 @@ Gamified wardriving with social analytics. Scan Bluetooth, WiFi and NFC devices 
 
 ## How It Works
 
-1. **Walk** with your Flipper Zero running FlipperSniffer
-2. The app scans BLE, WiFi and NFC devices continuously, logging each unique device once with its GPS coordinates
-3. At the end of your session, **export** the data as a JSON file to the SD card
-4. **Upload** the JSON to the web dashboard
-5. Explore your walk: interactive map, device heatmaps, economy score, security risk analysis, achievements, and more
+1. **Launch** FlipperSniffer on your Flipper Zero
+2. **Configure** your settings (GPS source, battery mode, scan types...)
+3. **Walk** - the app scans BLE and WiFi continuously, logging each unique device once with GPS coordinates
+4. **End** your session - data is exported as JSON to the SD card
+5. **Upload** the JSON to the web dashboard
+6. **Explore**: interactive map, device heatmaps, economy score, security risk, achievements, and more
 
 ---
 
@@ -22,10 +23,11 @@ Gamified wardriving with social analytics. Scan Bluetooth, WiFi and NFC devices 
 FlipperSniffer/
 ├── flipper/                     # Flipper Zero JavaScript app
 │   ├── flipper_sniffer.js       # Main app entry point
-│   ├── gps.js                   # GPS/NMEA parsing via UART
-│   ├── scanner.js               # BLE + WiFi scanning, manufacturer identification
+│   ├── settings.js              # Settings management + SD card persistence
+│   ├── gps.js                   # GPS: hardware module OR smartphone BLE
+│   ├── scanner.js               # BLE + WiFi scanning, manufacturer ID
 │   ├── database.js              # In-memory DB, deduplication, JSON export
-│   └── ui.js                    # Flipper display rendering
+│   └── ui.js                    # Flipper display rendering (6 screens)
 │
 └── webapp/                      # Web analytics dashboard
     ├── index.html               # Main page (upload + dashboard)
@@ -49,21 +51,10 @@ FlipperSniffer/
 ### Requirements
 
 - Flipper Zero with firmware supporting JavaScript apps (Momentum, Unleashed, or official with JS support)
-- GPS module connected via UART (GPIO pins) for location tracking
+- **For GPS** (optional, pick one):
+  - A smartphone with a BLE GPS relay app (recommended, no extra hardware)
+  - A hardware GPS module connected via UART (BN-220, NEO-6M, NEO-8M...)
 - Optional: WiFi dev board (ESP32-based) for WiFi scanning
-
-### Hardware Setup - GPS
-
-Connect a GPS module (e.g., BN-220, NEO-6M, NEO-8M) to the Flipper's GPIO:
-
-| GPS Module | Flipper GPIO |
-|-----------|-------------|
-| TX        | RX (pin 14) |
-| RX        | TX (pin 13) |
-| VCC       | 3.3V        |
-| GND       | GND         |
-
-The app reads NMEA sentences (`$GPGGA`, `$GPRMC`) at 9600 baud.
 
 ### Installation
 
@@ -71,6 +62,7 @@ The app reads NMEA sentences (`$GPGGA`, `$GPRMC`) at 9600 baud.
    ```
    /ext/apps/Scripts/flipper_sniffer/
    ├── flipper_sniffer.js
+   ├── settings.js
    ├── gps.js
    ├── scanner.js
    ├── database.js
@@ -79,15 +71,121 @@ The app reads NMEA sentences (`$GPGGA`, `$GPRMC`) at 9600 baud.
 
 2. On your Flipper, navigate to **Apps > Scripts > flipper_sniffer**
 
-3. The app starts scanning immediately. Walk around and watch the device count climb.
+3. The app opens to the **Start Screen** where you can adjust settings before scanning.
+
+---
+
+### Settings
+
+When you launch the app, you land on a **Start Screen** that shows a summary of your current settings. Press **[Settings]** to adjust them, or **[> START]** to begin scanning immediately.
+
+Settings are **saved to the SD card** and persist between sessions.
+
+#### GPS Source
+
+| Option | Description |
+|--------|-------------|
+| **Phone BT** (default) | Receives GPS from your smartphone via Bluetooth. No extra hardware needed. Pair your phone with the Flipper, then start a GPS relay app on your phone (see below). |
+| **Module** | Uses a hardware GPS module connected to the Flipper's GPIO via UART (9600 baud). For users who have a BN-220, NEO-6M, or similar module. |
+| **Off** | No GPS. Devices are still scanned and counted, but without location data. The map in the web dashboard will be empty. |
+
+#### Phone BT GPS Setup
+
+1. Set GPS Source to **Phone BT** in settings
+2. On your smartphone, install a BLE GPS relay app:
+   - **Android**: "Bluetooth GPS Output", "GPS2BLE", or "Share GPS"
+   - **iOS**: "GPS2BLE", "BLE GPS", or similar
+3. Pair your phone with the Flipper Zero via Bluetooth
+4. Start the GPS relay app on your phone
+5. Start your FlipperSniffer session - the GPS indicator should show `GPS:OK`
+
+The app accepts both **NMEA sentences** ($GPGGA, $GPRMC) and **simple JSON** (`{"lat":48.85,"lon":2.35,"speed":1.2}`) over BLE serial.
+
+#### Hardware GPS Module Setup
+
+If you prefer a dedicated GPS module:
+
+| GPS Module | Flipper GPIO |
+|-----------|-------------|
+| TX        | RX (pin 14) |
+| RX        | TX (pin 13) |
+| VCC       | 3.3V        |
+| GND       | GND         |
+
+#### Battery Mode
+
+| Mode | GPS interval | WiFi scan | Loop delay | Best for |
+|------|-------------|-----------|------------|----------|
+| **Full** | Every 3s | Every 10s | 80ms | Short sessions, max data |
+| **Normal** (default) | Every 5s | Every 15s | 100ms | Most walks |
+| **Saving** | Every 10s | Every 30s | 200ms | Long sessions (1h+), saving battery |
+
+#### Other Settings
+
+| Setting | Options | Description |
+|---------|---------|-------------|
+| **Scan BT** | ON / OFF | Enable or disable Bluetooth scanning |
+| **Scan WiFi** | ON / OFF | Enable or disable WiFi scanning |
+| **Vibrate** | ON / OFF | Haptic feedback on milestones and achievements |
+| **Sound** | ON / OFF | Sound effects on achievement unlock |
+| **Auto Export** | ON / OFF | Automatically export JSON when ending session |
+| **Screen Off** | Never / 15s / 30s / 60s | Screen timeout to save battery |
+
+---
 
 ### Usage
 
-- **Left/Right** to navigate between buttons: `[Pause]` `[End]` `[Stats]`
-- **OK** to activate the selected button
-- **Pause**: Stops scanning temporarily (useful indoors)
-- **End Session**: Saves everything to JSON and shows the export path
-- **Stats**: View session summary (unique counts, distance, duration)
+#### Start Screen
+```
+┌──────────────────────────────┐
+│ FLIPPER SNIFFER              │
+│ v1.1 - WarDriving            │
+│                              │
+│ GPS: Phone BT  Batt: Normal  │
+│ Scan: BT+WiFi               │
+│                              │
+│ [Settings]        [> START]  │
+└──────────────────────────────┘
+```
+- **Left/Right** to select `[Settings]` or `[> START]`
+- **OK** to confirm
+- **Back** to exit the app
+
+#### Settings Screen
+```
+┌──────────────────────────────┐
+│ SETTINGS                     │
+│                              │
+│ > GPS Source       [Phone BT]│
+│   Battery          [Normal]  │
+│   Scan BT          [ON]     │
+│   Scan WiFi        [ON]     │
+│   Vibrate          [ON]     │
+│                              │
+│ [< Back]        L/R:Change   │
+└──────────────────────────────┘
+```
+- **Up/Down** to move between settings
+- **Left/Right** to change a value
+- **OK** or **Back** to save and return to Start Screen
+
+#### Scanning Screen
+```
+┌──────────────────────────────┐
+│ FLIPPER SNIFFER              │
+│ #a3f9b2   00:12:34|GPS:OK   │
+│ 1.2km walked                 │
+│                              │
+│ BT:84 WiFi:42 NFC:1         │
+│ Total: 127 unique devices    │
+│                              │
+│ [Pause]    [End]    [Stats]  │
+└──────────────────────────────┘
+```
+- **Left/Right** to navigate buttons
+- **OK** to activate
+
+---
 
 ### Deduplication
 
@@ -108,6 +206,7 @@ The session is saved to `/ext/exports/session_[id].json`. The JSON contains:
 - **devices.nfc**: unique NFC tags with UID, type, GPS
 - **stats**: pre-computed counts by brand, security type, etc.
 - **achievements**: unlocked and locked achievements
+- **settings**: snapshot of settings used for the session
 
 ---
 
@@ -133,7 +232,7 @@ The session is saved to `/ext/exports/session_[id].json`. The JSON contains:
   - Brand distribution (doughnut chart)
   - WiFi security breakdown (bar chart)
 
-- **Achievements** : badges unlocked during the session
+- **Achievements**: badges unlocked during the session
 
 - **Social Sharing**: Tweet, Toot, download as image, or copy stats to clipboard
 
@@ -232,7 +331,8 @@ Shows the brand distribution of Bluetooth devices as percentage bars. The manufa
 | Component | Technology |
 |-----------|-----------|
 | Flipper App | JavaScript (Flipper JS runtime) |
-| GPS | NMEA over UART (9600 baud) |
+| GPS | UART module OR smartphone BLE relay |
+| Settings | JSON persistence on SD card |
 | Map | Leaflet.js + CartoDB dark tiles |
 | Heatmap | leaflet.heat |
 | Charts | Chart.js 4 |
