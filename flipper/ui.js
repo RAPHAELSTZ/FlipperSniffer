@@ -1,17 +1,19 @@
 // FlipperSniffer - UI Module
 // Flipper Zero display rendering
-// Screens: start, settings, main, stats, confirm_end, save_complete
+// Screens: start, settings, qrcode, main, stats, confirm_end, save_complete
 
 let gui = require("gui");
+let qrcode = require("./qrcode");
 let canvas = null;
 
 // UI state
 let ui_state = {
-    screen: "start",     // start, settings, main, stats, confirm_end, save_complete
+    screen: "start",     // start, settings, qrcode, main, stats, confirm_end, save_complete
     notification: "",
     notification_time: 0,
     selected_button: 0,  // context-dependent
     settings_cursor: 0,  // which setting row is selected
+    qr_data: null,       // cached QR code matrix
 };
 
 // ──────────────────────────────────────
@@ -125,6 +127,59 @@ function draw_settings(canvas, data) {
     // Bottom
     canvas.drawStr(2, 63, "[< Back]");
     canvas.drawStr(70, 63, "L/R:Change");
+}
+
+// ──────────────────────────────────────
+//  SCREEN: QR CODE (companion link)
+// ──────────────────────────────────────
+
+function draw_qrcode(canvas, data) {
+    // Generate QR only once (cache it)
+    if (!ui_state.qr_data && data.companion_url) {
+        ui_state.qr_data = qrcode.generate(data.companion_url);
+        if (ui_state.qr_data) {
+            print("[UI] QR v" + ui_state.qr_data.version + " (" + ui_state.qr_data.size + "x" + ui_state.qr_data.size + ")");
+        }
+    }
+
+    let qr = ui_state.qr_data;
+
+    if (qr) {
+        // Calculate pixel size to fit screen height (64px)
+        // QR size + 2 quiet zone modules
+        let total_modules = qr.size + 2;
+        let ps = Math.floor(60 / total_modules); // Leave room for text
+        if (ps < 1) ps = 1;
+        let qr_total = total_modules * ps;
+
+        // Draw QR on left side
+        let qr_x = 2;
+        let qr_y = Math.floor((64 - qr_total) / 2);
+        qrcode.draw(canvas, qr, qr_x, qr_y, ps);
+
+        // Text on right side
+        let text_x = qr_x + qr_total + 4;
+        canvas.setFont("primary");
+        canvas.drawStr(text_x, 10, "SCAN ME");
+
+        canvas.setFont("secondary");
+        canvas.drawStr(text_x, 22, "Open on your");
+        canvas.drawStr(text_x, 30, "phone to start");
+        canvas.drawStr(text_x, 38, "GPS tracking");
+
+        canvas.drawStr(text_x, 50, "#" + (data.session_id || "").substring(0, 6));
+        canvas.drawStr(text_x, 63, "[OK: Start]");
+    } else {
+        // Fallback if QR generation failed
+        canvas.setFont("primary");
+        canvas.drawStr(5, 15, "GPS COMPANION");
+
+        canvas.setFont("secondary");
+        canvas.drawStr(5, 30, "Open on your phone:");
+        canvas.drawStr(5, 40, data.companion_url || "");
+        canvas.drawStr(5, 50, "#" + (data.session_id || "").substring(0, 6));
+        canvas.drawStr(5, 63, "[OK: Start scanning]");
+    }
 }
 
 // ──────────────────────────────────────
@@ -273,6 +328,9 @@ function render(data) {
             case "settings":
                 draw_settings(canvas, data);
                 break;
+            case "qrcode":
+                draw_qrcode(canvas, data);
+                break;
             case "main":
                 draw_main(canvas, data);
                 break;
@@ -304,9 +362,9 @@ function handle_input(key, data) {
                     ui_state.settings_cursor = 0;
                     return "open_settings";
                 } else {
-                    ui_state.screen = "main";
-                    ui_state.selected_button = 0;
-                    return "start_session";
+                    // Start session - show QR screen if companion mode
+                    ui_state.qr_data = null; // Reset QR cache
+                    return "start_session"; // Main app decides which screen
                 }
             }
             if (key === "left") {
@@ -343,6 +401,20 @@ function handle_input(key, data) {
                 ui_state.screen = "start";
                 ui_state.selected_button = 1; // pre-select START
                 return "save_settings";
+            }
+            break;
+
+        // ─── QR CODE SCREEN ───
+        case "qrcode":
+            if (key === "ok") {
+                ui_state.screen = "main";
+                ui_state.selected_button = 0;
+                return "qr_done";
+            }
+            if (key === "back") {
+                ui_state.screen = "main";
+                ui_state.selected_button = 0;
+                return "qr_done";
             }
             break;
 
@@ -411,6 +483,10 @@ function get_screen() {
     return ui_state.screen;
 }
 
+function set_selected_button(idx) {
+    ui_state.selected_button = idx;
+}
+
 function show_notification(text) {
     ui_state.notification = text;
     ui_state.notification_time = Date.now();
@@ -422,6 +498,7 @@ module.exports = {
     handle_input: handle_input,
     set_screen: set_screen,
     get_screen: get_screen,
+    set_selected_button: set_selected_button,
     show_notification: show_notification,
     format_time: format_time,
     format_distance: format_distance,

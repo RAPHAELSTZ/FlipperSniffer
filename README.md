@@ -27,7 +27,8 @@ FlipperSniffer/
 │   ├── gps.js                   # GPS via hardware UART module
 │   ├── scanner.js               # BLE + WiFi scanning, manufacturer ID
 │   ├── database.js              # In-memory DB, deduplication, JSON export
-│   └── ui.js                    # Flipper display rendering (6 screens)
+│   ├── ui.js                    # Flipper display rendering (7 screens)
+│   └── qrcode.js                # QR code generator for companion link
 │
 └── webapp/                      # Web analytics dashboard
     ├── index.html               # Main page (upload + dashboard)
@@ -68,7 +69,8 @@ FlipperSniffer/
    ├── gps.js
    ├── scanner.js
    ├── database.js
-   └── ui.js
+   ├── ui.js
+   └── qrcode.js
    ```
 
 2. On your Flipper, navigate to **Apps > Scripts > flipper_sniffer**
@@ -88,7 +90,7 @@ Settings are **saved to the SD card** and persist between sessions.
 | Option | Description |
 |--------|-------------|
 | **Module** (default) | Uses a hardware GPS module connected to the Flipper's GPIO via UART (9600 baud). BN-220, NEO-6M, NEO-8M, etc. |
-| **Phone** | No GPS hardware. Use the GPS Companion page on your phone to record the walking path separately, then merge both files on the dashboard. Works on any phone including iPhone. |
+| **Phone** | No GPS hardware. When you start, the Flipper displays a **QR code** that opens the GPS Companion page on your phone with the session ID pre-filled. Both devices record independently, then you merge on the dashboard. Works on any phone including iPhone. |
 | **Off** | No GPS at all. Devices are still scanned and counted, but without location data. The map will be empty in the web dashboard, but all other metrics still work. |
 
 #### GPS Module Setup
@@ -290,9 +292,9 @@ Both devices record timestamps. The dashboard matches each device detection to t
 #### Step by Step
 
 1. On your Flipper, set **GPS: Phone** in settings
-2. On your phone browser, open the **GPS Companion** page (`companion.html`)
-3. Tap **START** on the companion (allow GPS access)
-4. Start scanning on the Flipper
+2. Press **START** on the Flipper
+3. The Flipper displays a **QR code** - scan it with your phone camera
+4. The companion page opens with the session ID pre-filled and GPS starts automatically
 5. **Walk together** - both devices record independently
 6. When done: tap **STOP** on the companion, press **End** on the Flipper
 7. **Download** the GPS track from the companion (downloads `gps_track_*.json`)
@@ -300,6 +302,33 @@ Both devices record timestamps. The dashboard matches each device detection to t
 9. Upload the **Flipper session file** (drag-and-drop)
 10. The GPS upload zone appears - upload the **GPS track file**
 11. Click **"ANALYZE MY WALK"** - data is merged automatically
+
+```
+┌──────────────────────────────┐
+│ ┌─────────┐   SCAN ME       │
+│ │ QR CODE │   Open on your  │
+│ │         │   phone to start│
+│ │         │   GPS tracking   │
+│ └─────────┘                  │
+│                #a3f9b2       │
+│                [OK: Start]   │
+└──────────────────────────────┘
+```
+
+#### Changing the Companion URL
+
+The QR code points to `https://tiptoo.net/flipper/companion.html?s=SESSION_ID` by default. To use your own hosted version:
+
+1. Edit the settings file on the SD card: `/ext/apps_data/flipper_sniffer/settings.json`
+2. Change the `companion_url` field to your own URL
+3. Or fork the project and change the default in `settings.js`
+
+```json
+{
+  "companion_url": "https://your-domain.com/path/companion.html",
+  ...
+}
+```
 
 #### Compatibility
 

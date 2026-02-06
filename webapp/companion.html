@@ -718,6 +718,18 @@
             errorMsg.classList.remove("visible");
         }
 
+        // ─── Read session ID from URL params ───
+        var urlParams = new URLSearchParams(window.location.search);
+        var urlSessionId = urlParams.get("s") || urlParams.get("session") || "";
+        if (urlSessionId) {
+            document.getElementById("session-id").value = urlSessionId.toLowerCase();
+            // Auto-start if session ID was provided via QR code
+            // Small delay to let the map initialize
+            setTimeout(function () {
+                window.startRecording();
+            }, 1500);
+        }
+
         // ─── Init placeholder map ───
         // Show a default map centered on a neutral location until GPS kicks in
         map = L.map("companion-map", {

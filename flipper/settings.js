@@ -15,6 +15,11 @@ let defaults = {
     // "companion" = no GPS hardware, use phone GPS Companion page
     gps_source: "module",
 
+    // Companion URL (base URL for QR code)
+    // Change this to your own hosted companion page
+    // The session ID will be appended as ?s=XXXXXX
+    companion_url: "https://tiptoo.net/flipper/companion.html",
+
     // Scan toggles
     scan_bt: true,
     scan_wifi: true,
@@ -76,7 +81,7 @@ function load() {
             if (raw && raw.length > 0) {
                 let saved = JSON.parse(raw);
                 for (let k in saved) {
-                    if (defaults[k] !== undefined) {
+                    if (defaults.hasOwnProperty(k)) {
                         current[k] = saved[k];
                     }
                 }
@@ -198,6 +203,12 @@ function is_companion_mode() {
     return current.gps_source === "companion";
 }
 
+// Build the full companion URL with session ID for QR code
+function get_companion_url(session_id) {
+    let base = current.companion_url || defaults.companion_url;
+    return base + "?s=" + session_id;
+}
+
 // ──────────────────────────────────────
 //  RESET
 // ──────────────────────────────────────
@@ -221,5 +232,6 @@ module.exports = {
     is_gps_enabled: is_gps_enabled,
     is_gps_module: is_gps_module,
     is_companion_mode: is_companion_mode,
+    get_companion_url: get_companion_url,
     reset: reset,
 };

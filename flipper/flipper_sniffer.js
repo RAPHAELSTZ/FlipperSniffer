@@ -283,6 +283,12 @@ function app_loop() {
 
     if (screen === "start" || screen === "settings") {
         render_data = get_settings_render_data();
+    } else if (screen === "qrcode") {
+        let session = database.get_session();
+        render_data = {
+            session_id: session.id,
+            companion_url: settings.get_companion_url(session.id),
+        };
     } else {
         let session = database.get_session();
         render_data = {
@@ -326,6 +332,17 @@ function on_input(key) {
     switch (action) {
         case "start_session":
             start_session();
+            // In companion mode, show QR code screen before scanning
+            if (settings.is_companion_mode()) {
+                ui.set_screen("qrcode");
+            } else {
+                ui.set_screen("main");
+                ui.set_selected_button(0);
+            }
+            break;
+
+        case "qr_done":
+            // User dismissed QR screen, continue to main scanning
             break;
 
         case "save_settings":
