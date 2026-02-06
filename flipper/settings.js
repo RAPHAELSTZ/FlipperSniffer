@@ -11,7 +11,8 @@ let SETTINGS_FILE = "/ext/apps_data/flipper_sniffer/settings.json";
 // ──────────────────────────────────────
 
 let defaults = {
-    // GPS Source: "off" or "module"
+    // GPS Source: "off", "companion", or "module"
+    // "companion" = no GPS hardware, use phone GPS Companion page
     gps_source: "module",
 
     // Scan toggles
@@ -46,7 +47,7 @@ let current = {};
 // ──────────────────────────────────────
 
 let menu = [
-    { key: "gps_source",     label: "GPS",            type: "choice", options: ["off", "module"],               display: ["Off", "Module"] },
+    { key: "gps_source",     label: "GPS",            type: "choice", options: ["off", "companion", "module"],  display: ["Off", "Phone", "Module"] },
     { key: "battery_mode",   label: "Battery",        type: "choice", options: ["full", "normal", "saving"],   display: ["Full", "Normal", "Saving"] },
     { key: "scan_bt",        label: "Scan BT",        type: "bool" },
     { key: "scan_wifi",      label: "Scan WiFi",      type: "bool" },
@@ -186,11 +187,15 @@ function get_intervals() {
 }
 
 function is_gps_enabled() {
-    return current.gps_source !== "off";
+    return current.gps_source === "module";
 }
 
 function is_gps_module() {
     return current.gps_source === "module";
+}
+
+function is_companion_mode() {
+    return current.gps_source === "companion";
 }
 
 // ──────────────────────────────────────
@@ -215,5 +220,6 @@ module.exports = {
     get_intervals: get_intervals,
     is_gps_enabled: is_gps_enabled,
     is_gps_module: is_gps_module,
+    is_companion_mode: is_companion_mode,
     reset: reset,
 };

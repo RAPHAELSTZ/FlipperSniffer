@@ -59,7 +59,7 @@ function draw_start(canvas, data) {
 
     // GPS status preview
     let gps_src = data.gps_source || "off";
-    let gps_label = gps_src === "module" ? "Module" : "Off";
+    let gps_label = gps_src === "module" ? "Module" : (gps_src === "companion" ? "Phone" : "Off");
     canvas.drawStr(2, 36, "GPS: " + gps_label);
 
     // Battery mode
@@ -153,7 +153,9 @@ function draw_main(canvas, data) {
     // Timer + GPS
     let timer_str = format_time(duration);
     let gps_str;
-    if (gps_mode === "off") {
+    if (gps_mode === "companion") {
+        gps_str = "GPS:TEL";
+    } else if (gps_mode === "off") {
         gps_str = "GPS:OFF";
     } else if (gps_fix) {
         gps_str = "GPS:OK";
@@ -163,8 +165,10 @@ function draw_main(canvas, data) {
     canvas.drawStr(50, 20, timer_str + "|" + gps_str);
 
     // Distance
-    if (gps_mode !== "off") {
+    if (gps_mode === "module") {
         canvas.drawStr(2, 28, format_distance(distance) + " walked");
+    } else if (gps_mode === "companion") {
+        canvas.drawStr(2, 28, "GPS via phone companion");
     }
 
     // Device counts

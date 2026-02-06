@@ -45,6 +45,33 @@
                 <span class="file-check">&#10003;</span>
             </div>
 
+            <!-- GPS Track Upload (for companion mode) -->
+            <div id="gps-upload-section" class="gps-upload-section hidden">
+                <div class="gps-upload-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                        <path d="M2 12h20"/>
+                    </svg>
+                    <span>GPS Companion Track</span>
+                </div>
+                <p id="gps-hint" class="gps-hint">Used the GPS Companion on your phone? Upload the track here.</p>
+                <div id="gps-drop-zone" class="drop-zone gps-drop-zone">
+                    <div class="drop-zone-inner">
+                        <p class="drop-text-small">DROP GPS TRACK HERE</p>
+                        <p class="drop-subtext">gps_track_*.json from companion page</p>
+                        <input type="file" id="gps-file-input" accept=".json" hidden>
+                    </div>
+                </div>
+                <div id="gps-file-info" class="file-info hidden">
+                    <div>
+                        <span class="file-name"></span>
+                        <span class="gps-detail"></span>
+                    </div>
+                    <span class="file-check">&#10003;</span>
+                </div>
+            </div>
+
             <button id="analyze-btn" class="btn-primary hidden" disabled>
                 ANALYZE MY WALK <span class="btn-arrow">&rarr;</span>
             </button>
@@ -54,6 +81,7 @@
                     LOAD DEMO SESSION
                 </button>
                 <p class="demo-hint">No Flipper? Try with sample data</p>
+                <a href="companion.html" class="companion-link">Open GPS Companion</a>
             </div>
         </div>
     </div>
@@ -237,6 +265,7 @@
 
     <!-- Scripts -->
     <script src="js/demo-data.js"></script>
+    <script src="js/merge.js"></script>
     <script src="js/upload.js"></script>
     <script src="js/analytics.js"></script>
     <script src="js/map.js"></script>

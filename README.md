@@ -31,11 +31,13 @@ FlipperSniffer/
 │
 └── webapp/                      # Web analytics dashboard
     ├── index.html               # Main page (upload + dashboard)
+    ├── companion.html           # GPS Companion (phone GPS tracker)
     ├── css/
     │   └── style.css            # Cyberpunk dark theme
     └── js/
         ├── app.js               # Main controller
         ├── upload.js            # File drag-and-drop + JSON parsing
+        ├── merge.js             # GPS track merge (companion + session)
         ├── analytics.js         # Metrics: economy, income, danger, tribes
         ├── map.js               # Leaflet.js map with layers
         ├── charts.js            # Chart.js graphs
@@ -51,7 +53,9 @@ FlipperSniffer/
 ### Requirements
 
 - Flipper Zero with firmware supporting JavaScript apps (Momentum, Unleashed, or official with JS support)
-- **For GPS** (optional): a hardware GPS module connected via UART (BN-220, NEO-6M, NEO-8M...). Costs ~10-15 EUR. Without it, scanning still works but without location/map data.
+- **For GPS** (optional, two options):
+  - **Hardware GPS module** connected via UART (BN-220, NEO-6M, NEO-8M...). Costs ~10-15 EUR. Most reliable option.
+  - **Phone GPS Companion** (no extra hardware needed): open the companion page on your phone, walk with both devices, merge the data on the dashboard afterwards. Works on any phone/browser including iPhone Safari.
 - Optional: WiFi dev board (ESP32-based) for WiFi scanning
 
 ### Installation
@@ -84,7 +88,8 @@ Settings are **saved to the SD card** and persist between sessions.
 | Option | Description |
 |--------|-------------|
 | **Module** (default) | Uses a hardware GPS module connected to the Flipper's GPIO via UART (9600 baud). BN-220, NEO-6M, NEO-8M, etc. |
-| **Off** | No GPS. Devices are still scanned and counted, but without location data. The map will be empty in the web dashboard, but all other metrics still work. |
+| **Phone** | No GPS hardware. Use the GPS Companion page on your phone to record the walking path separately, then merge both files on the dashboard. Works on any phone including iPhone. |
+| **Off** | No GPS at all. Devices are still scanned and counted, but without location data. The map will be empty in the web dashboard, but all other metrics still work. |
 
 #### GPS Module Setup
 
@@ -261,6 +266,50 @@ No Flipper Zero? Click **"LOAD DEMO SESSION"** on the upload screen. This genera
 5. Drag-and-drop (or click to browse) your JSON file
 6. Click **"ANALYZE MY WALK"**
 
+### GPS Companion (No GPS Module Needed)
+
+Don't have a GPS module? Use your phone as a GPS tracker instead. Both devices record independently, then data is merged on the dashboard.
+
+#### How It Works
+
+```
+ Phone (GPS Companion)              Flipper Zero
+ ┌─────────────────────┐           ┌─────────────────────┐
+ │ Records GPS path    │           │ Scans BT + WiFi     │
+ │ with timestamps     │    walk   │ with timestamps      │
+ │                     │ ───────── │                      │
+ │ Downloads .json     │  together │ Exports .json        │
+ └─────────────────────┘           └─────────────────────┘
+           │                                │
+           └──────── Dashboard ─────────────┘
+                  Merges by timestamp
+```
+
+Both devices record timestamps. The dashboard matches each device detection to the closest GPS point in time (within 30 seconds).
+
+#### Step by Step
+
+1. On your Flipper, set **GPS: Phone** in settings
+2. On your phone browser, open the **GPS Companion** page (`companion.html`)
+3. Tap **START** on the companion (allow GPS access)
+4. Start scanning on the Flipper
+5. **Walk together** - both devices record independently
+6. When done: tap **STOP** on the companion, press **End** on the Flipper
+7. **Download** the GPS track from the companion (downloads `gps_track_*.json`)
+8. Open the web dashboard
+9. Upload the **Flipper session file** (drag-and-drop)
+10. The GPS upload zone appears - upload the **GPS track file**
+11. Click **"ANALYZE MY WALK"** - data is merged automatically
+
+#### Compatibility
+
+The GPS Companion works on **any modern browser** with Geolocation API support:
+- iPhone Safari (iOS 14+)
+- Android Chrome
+- Any desktop browser
+
+No Bluetooth, no special app, no third-party dependency. Just a web page that uses your phone's built-in GPS.
+
 ---
 
 ## Metrics Explained
@@ -316,7 +365,8 @@ Shows the brand distribution of Bluetooth devices as percentage bars. The manufa
 | Component | Technology |
 |-----------|-----------|
 | Flipper App | JavaScript (Flipper JS runtime) |
-| GPS | Hardware UART module (NMEA, 9600 baud) |
+| GPS | Hardware UART module (NMEA, 9600 baud) or Phone GPS Companion |
+| GPS Companion | Browser Geolocation API + Leaflet.js (standalone HTML) |
 | Settings | JSON persistence on SD card |
 | Map | Leaflet.js + CartoDB dark tiles |
 | Heatmap | leaflet.heat |

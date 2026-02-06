@@ -337,6 +337,82 @@ body::before {
     box-shadow: var(--glow-cyan);
 }
 
+/* GPS Upload Section */
+.gps-upload-section {
+    margin-top: 1.5rem;
+    padding: 1.2rem;
+    background: rgba(0, 245, 255, 0.03);
+    border: 1px solid rgba(0, 245, 255, 0.15);
+    border-radius: 12px;
+}
+
+.gps-upload-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    color: var(--neon-cyan);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.gps-upload-header svg {
+    color: var(--neon-cyan);
+    flex-shrink: 0;
+}
+
+.gps-hint {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.8rem;
+}
+
+.gps-drop-zone {
+    padding: 1.5rem 1rem !important;
+    border-color: rgba(0, 245, 255, 0.2) !important;
+}
+
+.gps-drop-zone:hover,
+.gps-drop-zone.drag-over {
+    border-color: var(--neon-cyan) !important;
+    box-shadow: var(--glow-cyan), inset 0 0 20px rgba(0, 245, 255, 0.03) !important;
+}
+
+.drop-text-small {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+    margin-bottom: 0.3rem;
+}
+
+.gps-detail {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--neon-cyan);
+    display: block;
+    margin-top: 0.2rem;
+}
+
+.companion-link {
+    display: inline-block;
+    margin-top: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--neon-cyan);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--neon-cyan);
+    transition: all 0.3s;
+}
+
+.companion-link:hover {
+    color: var(--neon-green);
+    border-color: var(--neon-green);
+}
+
 .demo-section {
     margin-top: 2rem;
 }
